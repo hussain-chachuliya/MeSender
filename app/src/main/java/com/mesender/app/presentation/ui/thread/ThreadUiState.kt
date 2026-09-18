@@ -9,5 +9,13 @@ data class ThreadUiState(
     val draft: String = "",
     val isSending: Boolean = false,
     val error: String? = null,
-    val isUnlocked: Boolean = true
-)
+    val isUnlocked: Boolean? = null
+) {
+    /**
+     * Lock gating (RULING-3): gated unless we positively know the inbox is
+     * unlocked (or positively not locked). Unknown inbox / unknown unlock
+     * state renders the gate so locked content and the composer never flash.
+     */
+    val isGated: Boolean
+        get() = (inbox?.isLocked != false) && (isUnlocked != true)
+}

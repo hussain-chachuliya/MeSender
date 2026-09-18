@@ -40,10 +40,9 @@ fun ThreadScreen(
     LaunchedEffect(inboxId) { viewModel.start(inboxId) }
     val state by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
-    val isGated = state.inbox?.isLocked == true && !state.isUnlocked
 
     LaunchedEffect(state.items.size) {
-        if (!isGated && state.items.isNotEmpty()) listState.animateScrollToItem(0)
+        if (!state.isGated && state.items.isNotEmpty()) listState.animateScrollToItem(0)
     }
 
     Scaffold(
@@ -61,7 +60,7 @@ fun ThreadScreen(
             )
         },
         bottomBar = {
-            if (!isGated) {
+            if (!state.isGated) {
                 ThreadInputBar(
                     draft = state.draft,
                     isSending = state.isSending,
@@ -72,7 +71,7 @@ fun ThreadScreen(
             }
         }
     ) { padding ->
-        if (isGated) {
+        if (state.isGated) {
             ThreadLockedGate(Modifier.fillMaxSize().padding(padding))
         } else {
             LazyColumn(

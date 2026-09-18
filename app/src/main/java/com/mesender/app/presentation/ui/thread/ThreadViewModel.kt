@@ -21,12 +21,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ThreadViewModel @Inject constructor(
-    private val getItemsByInbox: GetItemsByInbox,
-    private val getInboxes: GetInboxes,
-    private val composeTextItem: ComposeTextItem,
-    private val shareMediaItem: ShareMediaItem,
+    private val getItemsByInboxUseCase: GetItemsByInbox,
+    private val getInboxesUseCase: GetInboxes,
+    private val composeTextItemUseCase: ComposeTextItem,
+    private val shareMediaItemUseCase: ShareMediaItem,
     private val deleteItemUseCase: DeleteItem,
-    private val isInboxUnlocked: IsInboxUnlocked
+    private val isInboxUnlockedUseCase: IsInboxUnlocked
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ThreadUiState())
@@ -39,9 +39,9 @@ class ThreadViewModel @Inject constructor(
         this.inboxId = inboxId
         viewModelScope.launch {
             combine(
-                getInboxes(),
-                getItemsByInbox(inboxId),
-                isInboxUnlocked(inboxId)
+                getInboxesUseCase(),
+                getItemsByInboxUseCase(inboxId),
+                isInboxUnlockedUseCase(inboxId)
             ) { inboxes, items, isUnlocked ->
                 ThreadUiState(
                     inbox = inboxes.firstOrNull { it.id == inboxId },
@@ -62,14 +62,14 @@ class ThreadViewModel @Inject constructor(
         if (text.isEmpty()) return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSending = true)
-            composeTextItem(inboxId, text)
+            composeTextItemUseCase(inboxId, text)
             _uiState.value = _uiState.value.copy(isSending = false, draft = "")
         }
     }
 
     fun sendMedia(uri: Uri, mimeType: String, title: String?) {
         viewModelScope.launch {
-            shareMediaItem(inboxId, MediaShare(uri, mimeType, title))
+            shareMediaItemUseCase(inboxId, MediaShare(uri, mimeType, title))
         }
     }
 

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.test.espresso.Espresso
 import com.mesender.app.domain.lock.LockManager
 import com.mesender.app.domain.model.Inbox
 import com.mesender.app.domain.model.Item
@@ -39,12 +40,14 @@ class ThreadScreenTest {
 
     @Before
     fun setUp() {
+        val itemRepo = itemRepoWith(item)
+        val inboxRepo = inboxRepoWith(inbox)
         vm = ThreadViewModel(
-            GetItemsByInbox(itemRepoWith(item)),
-            GetInboxes(inboxRepoWith(inbox)),
-            ComposeTextItem(itemRepoWith(item)),
-            ShareMediaItem(itemRepoWith(item)),
-            DeleteItem(itemRepoWith(item)),
+            GetItemsByInbox(itemRepo),
+            GetInboxes(inboxRepo),
+            ComposeTextItem(itemRepo),
+            ShareMediaItem(itemRepo),
+            DeleteItem(itemRepo),
             IsInboxUnlocked(lockManagerWith(unlocked = true))
         )
     }
@@ -58,18 +61,22 @@ class ThreadScreenTest {
         composeRule.setContent { MaterialTheme { ThreadScreen(1, {}, vm) } }
         composeRule.onNodeWithText("Message yourself…").performTextInput("hello")
         composeRule.onNodeWithContentDescription("Send").performClick()
-        // falls back to item list which now includes inserted text via fake repo
+        Espresso.closeSoftKeyboard()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("hello").assertIsDisplayed()
     }
 
     @Test fun lockedInbox_blocksContentUntilUnlocked() {
         val lockedInbox = Inbox(1, "Work", isLocked = true, 0, 0)
         val lockedItem = Item(1, 1, ItemType.Text, "secrets", null, null, null, 0, 0)
+        val lockedItemRepo = itemRepoWith(lockedItem)
+        val lockedInboxRepo = inboxRepoWith(lockedInbox)
         val lockedVm = ThreadViewModel(
-            GetItemsByInbox(itemRepoWith(lockedItem)),
-            GetInboxes(inboxRepoWith(lockedInbox)),
-            ComposeTextItem(itemRepoWith(lockedItem)),
-            ShareMediaItem(itemRepoWith(lockedItem)),
-            DeleteItem(itemRepoWith(lockedItem)),
+            GetItemsByInbox(lockedItemRepo),
+            GetInboxes(lockedInboxRepo),
+            ComposeTextItem(lockedItemRepo),
+            ShareMediaItem(lockedItemRepo),
+            DeleteItem(lockedItemRepo),
             IsInboxUnlocked(lockManagerWith(unlocked = false))
         )
         composeRule.setContent { MaterialTheme { ThreadScreen(1, {}, lockedVm) } }
@@ -83,7 +90,16 @@ class ThreadScreenTest {
         private val items = MutableStateFlow(listOf(item))
         override fun observeItemsByInbox(id: Long) = items
         override fun observeItem(id: Long) = flowOf(item)
-        override suspend fun insertTextItem(id: Long, text: String) = item.copy(textContent = text, title = null)
+        override suspend fun insertTextItem(id: Long, text: String): Item {
+            val created = item.copy(
+                id = (items.value.maxOfOrNull { it.id } ?: 0L) + 1,
+                inboxId = id,
+                textContent = text,
+                title = null
+            )
+            items.value = items.value + created
+            return created
+        }
         override suspend fun insertMediaItem(id: Long, uri: Uri, mime: String, title: String?) = item
         override suspend fun insertLinkItem(id: Long, url: String, title: String?) = item
         override suspend fun deleteItem(item: Item) = true

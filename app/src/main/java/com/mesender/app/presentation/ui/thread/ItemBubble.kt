@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,13 +46,17 @@ fun ItemBubble(
                     model = File(item.mediaPath.orEmpty()),
                     contentDescription = item.title ?: "Photo",
                     modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FillWidth
+                    contentScale = ContentScale.FillWidth,
+                    placeholder = ColorPainter(Color.LightGray),
+                    error = ColorPainter(Color(0xFFFFCDD2))
                 )
                 ItemType.Video -> AsyncImage(
                     model = File(item.mediaPath.orEmpty()),
                     contentDescription = item.title ?: "Video",
                     modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FillWidth
+                    contentScale = ContentScale.FillWidth,
+                    placeholder = ColorPainter(Color.LightGray),
+                    error = ColorPainter(Color(0xFFFFCDD2))
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
