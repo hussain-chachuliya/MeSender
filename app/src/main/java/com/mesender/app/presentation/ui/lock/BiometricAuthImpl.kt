@@ -1,7 +1,6 @@
 package com.mesender.app.presentation.ui.lock
 
 import android.content.Context
-import android.security.keystore.KeyProperties
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -21,17 +20,13 @@ class BiometricAuthImpl @Inject constructor(
                 BiometricManager.Authenticators.DEVICE_CREDENTIAL
         ) == BiometricManager.BIOMETRIC_SUCCESS
 
-    override fun authenticate(activity: FragmentActivity, onSuccess: () -> Unit) {
+    override fun authenticate(
+        activity: FragmentActivity,
+        onSuccess: () -> Unit,
+        onError: (cancelled: Boolean) -> Unit
+    ) {
         val executor: Executor = ContextCompat.getMainExecutor(activity)
-        val prompt = BiometricPrompt(
-            activity,
-            executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    onSuccess()
-                }
-            }
-        )
+        val prompt = BiometricPrompt(activity, executor, BiometricAuthCallback(onSuccess, onError))
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Unlock MeSender")
             .setSubtitle("Confirm it's you to unlock")
@@ -41,5 +36,26 @@ class BiometricAuthImpl @Inject constructor(
             )
             .build()
         prompt.authenticate(info)
+    }
+}
+
+internal class BiometricAuthCallback(
+    private val onSuccess: () -> Unit,
+    private val onError: (cancelled: Boolean) -> Unit
+) : BiometricPrompt.AuthenticationCallback() {
+
+    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+        onSuccess()
+    }
+
+    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+        val cancelled = errorCode == BiometricPrompt.ERROR_CANCELED ||
+            errorCode == BiometricPrompt.ERROR_USER_CANCELED ||
+            errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON
+        onError(cancelled)
+    }
+
+    override fun onAuthenticationFailed() {
+        onError(false)
     }
 }

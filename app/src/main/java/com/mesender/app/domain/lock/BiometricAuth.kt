@@ -4,5 +4,5 @@ import androidx.fragment.app.FragmentActivity
 
 interface BiometricAuth {
     fun isAvailable(): Boolean
-    fun authenticate(activity: FragmentActivity, onSuccess: () -> Unit)
+    fun authenticate(activity: FragmentActivity, onSuccess: () -> Unit, onError: (cancelled: Boolean) -> Unit = {})
 }
