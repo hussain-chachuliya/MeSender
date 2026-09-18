@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.mesender.app.domain.model.Item
 import com.mesender.app.domain.model.ItemType
@@ -14,6 +15,7 @@ import com.mesender.app.domain.repository.ItemRepository
 import com.mesender.app.domain.usecase.search.SearchItems
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -46,6 +48,31 @@ class SearchScreenTest {
             composeRule.onAllNodesWithText("milk").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("milk").assertIsDisplayed()
+    }
+
+    @Test fun unlockedResultTap_opensInbox() {
+        val repo = object : ItemRepository {
+            override fun observeItemsByInbox(id: Long): Flow<List<Item>> = flowOf(emptyList())
+            override fun observeItem(id: Long) = flowOf(null)
+            override suspend fun insertTextItem(id: Long, text: String) = Item(1, id, ItemType.Text, text, null, null, null, 0, 0)
+            override suspend fun insertMediaItem(id: Long, u: Uri, m: String, t: String?) = Item(1, id, ItemType.Photo, null, t, null, m, 0, 0)
+            override suspend fun insertLinkItem(id: Long, url: String, t: String?) = Item(1, id, ItemType.Link, url, t, null, null, 0, 0)
+            override suspend fun deleteItem(item: Item) = true
+            override fun search(query: String) =
+                flowOf(listOf(SearchResult(Item(1, 1, ItemType.Text, "buy milk", null, null, null, 0, 0), "Groceries", false)))
+            override suspend fun reloadMedia(item: Item) = null
+        }
+        val tappableVm = SearchViewModel(SearchItems(repo))
+        var openedInboxId: Long? = null
+        composeRule.setContent {
+            MaterialTheme { SearchScreen({}, { inboxId -> openedInboxId = inboxId }, tappableVm) }
+        }
+        composeRule.onNodeWithText("Search everything you saved").performTextInput("milk")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("buy milk").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("buy milk").performClick()
+        assertEquals(1L, openedInboxId)
     }
 
     @Test fun lockedInboxResult_showsInboxNameButNotContent() {

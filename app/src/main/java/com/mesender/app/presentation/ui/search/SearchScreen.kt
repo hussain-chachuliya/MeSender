@@ -1,5 +1,6 @@
 package com.mesender.app.presentation.ui.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -74,7 +75,11 @@ fun SearchScreen(
                             )
                         }
                     } else {
-                        ItemBubble(item = result.item, onDelete = {}) // deletion only within thread
+                        ItemBubble(
+                            item = result.item,
+                            onDelete = {}, // deletion only within thread
+                            modifier = Modifier.clickable { onOpenInbox(result.item.inboxId) }
+                        )
                     }
                 }
             }
