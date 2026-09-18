@@ -5,14 +5,14 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
+
+const val DATA_STORE_NAME = "mesender_prefs"
 
 private val PIN_HASH = stringPreferencesKey("pin_hash")
 
-@Singleton
 class DataStoreProvider @Inject constructor(
-    val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>
 ) {
 
     suspend fun readPinHash(): String? =
