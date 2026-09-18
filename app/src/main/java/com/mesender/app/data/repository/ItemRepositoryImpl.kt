@@ -117,7 +117,6 @@ class ItemRepositoryImpl @Inject constructor(
 
     override suspend fun reloadMedia(item: Item): Item? {
         if (!item.isRetryableMedia) return null
-        val entity = itemDao.observeItem(item.id).map { it }.let { /* collect in context */ null }
         // Implementation: re-read item to get sourceUri, retry copy — called from use case with
         // original sourceUri stored in title as a workaround, or by re-launching picker.
         // For v1, retry re-launches the Photo Picker; this returns null.
