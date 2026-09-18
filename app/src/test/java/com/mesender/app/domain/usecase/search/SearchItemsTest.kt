@@ -33,4 +33,12 @@ class SearchItemsTest {
         val out = SearchItems(repo)("mil*k").first()
         assertEquals(1, out.size)
     }
+
+    @Test
+    fun `double quotes are neutralized before hitting repo`() = runTest {
+        val repo = mockk<ItemRepository>()
+        coEvery { repo.search("\"he said  hi *\"") } returns flowOf(listOf(result()))
+        val out = SearchItems(repo)("he said \"hi\"").first()
+        assertEquals(1, out.size)
+    }
 }
