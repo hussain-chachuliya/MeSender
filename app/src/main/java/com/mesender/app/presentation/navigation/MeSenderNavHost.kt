@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.mesender.app.presentation.ui.home.HomeScreen
 import com.mesender.app.presentation.ui.search.SearchScreen
+import com.mesender.app.presentation.ui.settings.SettingsScreen
 import com.mesender.app.presentation.ui.thread.ThreadScreen
 
 @Composable
@@ -14,7 +15,8 @@ fun MeSenderNavHost(navController: NavHostController) {
         composable(NavRoutes.HOME) {
             HomeScreen(
                 onOpenInbox = { inboxId -> navController.navigate(NavRoutes.thread(inboxId)) },
-                onOpenSearch = { navController.navigate(NavRoutes.SEARCH) }
+                onOpenSearch = { navController.navigate(NavRoutes.SEARCH) },
+                onOpenSettings = { navController.navigate(NavRoutes.SETTINGS) }
             )
         }
         composable(NavRoutes.THREAD) { backStackEntry ->
@@ -28,6 +30,9 @@ fun MeSenderNavHost(navController: NavHostController) {
                 onBack = { navController.navigateUp() },
                 onOpenInbox = { inboxId -> navController.navigate(NavRoutes.thread(inboxId)) }
             )
+        }
+        composable(NavRoutes.SETTINGS) {
+            SettingsScreen(onBack = { navController.navigateUp() })
         }
     }
 }

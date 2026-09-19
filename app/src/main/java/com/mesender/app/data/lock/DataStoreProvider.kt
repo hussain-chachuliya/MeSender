@@ -2,14 +2,18 @@ package com.mesender.app.data.lock
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
 const val DATA_STORE_NAME = "mesender_prefs"
 
 private val PIN_HASH = stringPreferencesKey("pin_hash")
+private val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
 
 class DataStoreProvider @Inject constructor(
     private val dataStore: DataStore<Preferences>
@@ -24,5 +28,12 @@ class DataStoreProvider @Inject constructor(
 
     suspend fun clearPinHash() {
         dataStore.edit { it.remove(PIN_HASH) }
+    }
+
+    val appLockEnabled: Flow<Boolean> =
+        dataStore.data.map { it[APP_LOCK_ENABLED] == true }
+
+    suspend fun setAppLockEnabled(enabled: Boolean) {
+        dataStore.edit { it[APP_LOCK_ENABLED] = enabled }
     }
 }

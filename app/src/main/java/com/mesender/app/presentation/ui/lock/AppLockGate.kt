@@ -24,6 +24,9 @@ class AppLockViewModel @Inject constructor(
     val isUnlocked: StateFlow<Boolean> = lockManager.isAppUnlocked
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    val appLockEnabled: StateFlow<Boolean> = pinStore.isAppLockEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     private var _pinSet by mutableStateOf<Boolean?>(null)
     val pinSet: Boolean? get() = _pinSet
 
@@ -41,7 +44,10 @@ class AppLockViewModel @Inject constructor(
     }
 
     fun skipSetup() {
-        _pinSet = true
+        viewModelScope.launch {
+            lockManager.unlockApp()
+            _pinSet = true
+        }
     }
 }
 
@@ -52,10 +58,13 @@ fun AppLockGate(
 ) {
     val unlocked by lockViewModel.isUnlocked.collectAsState()
     val pinSet = lockViewModel.pinSet
+    val appLockEnabled by lockViewModel.appLockEnabled.collectAsState()
 
     if (pinSet == null) return
 
-    if (!pinSet) {
+    if (!appLockEnabled) {
+        content()
+    } else if (!pinSet) {
         LockScreen(
             setupMode = true,
             onUnlocked = { lockViewModel.onSetupComplete() },
