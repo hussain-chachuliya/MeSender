@@ -3,9 +3,11 @@ package com.mesender.app.presentation
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.Surface
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.compose.rememberNavController
+import com.mesender.app.presentation.navigation.MeSenderNavHost
 import com.mesender.app.presentation.theme.MeSenderTheme
+import com.mesender.app.presentation.ui.lock.AppLockGate
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -15,8 +17,8 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             MeSenderTheme {
-                Surface {
-                    // Empty placeholder; navigation is wired in Task 16, lock gate in Task 22.
+                AppLockGate {
+                    MeSenderNavHost(navController = rememberNavController())
                 }
             }
         }
