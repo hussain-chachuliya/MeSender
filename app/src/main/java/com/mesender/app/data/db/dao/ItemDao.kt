@@ -46,4 +46,14 @@ interface ItemDao {
 
     @Query("UPDATE items SET mediaPath = :path, needsMediaRetry = 0 WHERE id = :itemId")
     suspend fun setMediaPath(itemId: Long, path: String)
+
+    @Query(
+        """
+        SELECT items.* FROM items_fts
+        JOIN items ON items.id = items_fts.rowid
+        WHERE items_fts MATCH :query AND items.inboxId = :inboxId
+        ORDER BY items.id DESC
+        """
+    )
+    fun searchInInbox(inboxId: Long, query: String): Flow<List<ItemEntity>>
 }

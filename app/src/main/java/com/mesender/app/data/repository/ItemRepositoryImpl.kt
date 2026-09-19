@@ -115,6 +115,9 @@ class ItemRepositoryImpl @Inject constructor(
     override fun search(query: String): Flow<List<SearchResult>> =
         itemDao.searchWithInbox(query).map { list -> list.map { it.toSearchResult() } }
 
+    override fun searchInInbox(inboxId: Long, query: String): Flow<List<Item>> =
+        itemDao.searchInInbox(inboxId, query).map { list -> list.map { it.toDomain() } }
+
     override suspend fun reloadMedia(item: Item): Item? {
         if (!item.isRetryableMedia) return null
         // Implementation: re-read item to get sourceUri, retry copy — called from use case with

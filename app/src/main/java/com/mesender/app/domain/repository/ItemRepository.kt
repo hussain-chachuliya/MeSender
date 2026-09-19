@@ -18,5 +18,6 @@ interface ItemRepository {
     suspend fun insertLinkItem(inboxId: Long, url: String, title: String?): Item
     suspend fun deleteItem(item: Item): Boolean
     fun search(query: String): Flow<List<SearchResult>>
+    fun searchInInbox(inboxId: Long, query: String): Flow<List<Item>>
     suspend fun reloadMedia(item: Item): Item?
 }

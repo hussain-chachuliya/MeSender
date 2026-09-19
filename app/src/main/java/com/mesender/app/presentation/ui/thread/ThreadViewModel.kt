@@ -11,7 +11,10 @@ import com.mesender.app.domain.usecase.item.GetItemsByInbox
 import com.mesender.app.domain.usecase.item.MediaShare
 import com.mesender.app.domain.usecase.item.ShareMediaItem
 import com.mesender.app.domain.usecase.lock.IsInboxUnlocked
+import com.mesender.app.domain.usecase.search.SearchItemsInInbox
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,13 +29,15 @@ class ThreadViewModel @Inject constructor(
     private val composeTextItemUseCase: ComposeTextItem,
     private val shareMediaItemUseCase: ShareMediaItem,
     private val deleteItemUseCase: DeleteItem,
-    private val isInboxUnlockedUseCase: IsInboxUnlocked
+    private val isInboxUnlockedUseCase: IsInboxUnlocked,
+    private val searchItemsInInboxUseCase: SearchItemsInInbox
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ThreadUiState())
     val uiState: StateFlow<ThreadUiState> = _uiState.asStateFlow()
 
     private var inboxId: Long = -1L
+    private var searchJob: Job? = null
 
     fun start(inboxId: Long) {
         if (this.inboxId == inboxId) return
@@ -50,6 +55,42 @@ class ThreadViewModel @Inject constructor(
                 )
             }.collect { state -> _uiState.value = state }
         }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query, isSearchMode = true)
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _uiState.value = _uiState.value.copy(searchResults = emptyList(), isSearching = false)
+            return
+        }
+        searchJob = viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSearching = true)
+            delay(300)
+            searchItemsInInboxUseCase(inboxId, query).collect { results ->
+                _uiState.value = _uiState.value.copy(searchResults = results, isSearching = false)
+            }
+        }
+    }
+
+    fun toggleSearchMode() {
+        val current = _uiState.value
+        if (current.isSearchMode) {
+            _uiState.value = current.copy(isSearchMode = false, searchQuery = "", searchResults = emptyList())
+            searchJob?.cancel()
+        } else {
+            _uiState.value = current.copy(isSearchMode = true)
+        }
+    }
+
+    fun clearSearch() {
+        _uiState.value = _uiState.value.copy(
+            isSearchMode = false,
+            searchQuery = "",
+            searchResults = emptyList(),
+            isSearching = false
+        )
+        searchJob?.cancel()
     }
 
     fun updateDraft(text: String) {

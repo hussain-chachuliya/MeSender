@@ -21,6 +21,7 @@ import com.mesender.app.domain.usecase.lock.SetAppLock
 import com.mesender.app.domain.usecase.lock.UnlockInbox
 import com.mesender.app.domain.usecase.lock.VerifyPin
 import com.mesender.app.domain.usecase.search.SearchItems
+import com.mesender.app.domain.usecase.search.SearchItemsInInbox
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -44,6 +45,7 @@ object UseCaseModule {
     @Provides @Singleton fun deleteItem(r: ItemRepository) = DeleteItem(r)
 
     @Provides @Singleton fun searchItems(r: ItemRepository) = SearchItems(r)
+    @Provides @Singleton fun searchItemsInInbox(r: ItemRepository) = SearchItemsInInbox(r)
 
     @Provides @Singleton fun setAppLock(p: PinStore) = SetAppLock(p)
     @Provides @Singleton fun removeAppLock(p: PinStore, l: LockManager) = RemoveAppLock(p, l)
