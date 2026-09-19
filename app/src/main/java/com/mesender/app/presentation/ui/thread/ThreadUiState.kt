@@ -13,8 +13,14 @@ data class ThreadUiState(
     val isSearchMode: Boolean = false,
     val searchQuery: String = "",
     val searchResults: List<Item> = emptyList(),
-    val isSearching: Boolean = false
+    val isSearching: Boolean = false,
+    val selectedIds: Set<Long> = emptySet(),
+    val editingItem: Item? = null
 ) {
     val isGated: Boolean
         get() = inbox != null && inbox.isLocked && isUnlocked != true
+    val isSelectionMode: Boolean
+        get() = selectedIds.isNotEmpty()
+    val isEditing: Boolean
+        get() = editingItem != null
 }

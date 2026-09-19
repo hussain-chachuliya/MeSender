@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +40,9 @@ private val BubbleShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bot
 @Composable
 fun ItemBubble(
     item: Item,
-    onDelete: () -> Unit,
+    isSelected: Boolean,
+    isSelectionMode: Boolean,
+    onToggleSelection: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val timeText = formatTime(item.createdAt)
@@ -48,24 +50,26 @@ fun ItemBubble(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 64.dp, end = 8.dp, top = 1.dp, bottom = 1.dp),
+            .combinedClickable(
+                onClick = {
+                    if (isSelectionMode) onToggleSelection()
+                },
+                onLongClick = onToggleSelection
+            )
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         contentAlignment = Alignment.CenterEnd
     ) {
         Surface(
-            modifier = Modifier
-                .widthIn(max = 300.dp)
-                .combinedClickable(
-                    onClick = {},
-                    onLongClick = onDelete
-                ),
+            modifier = Modifier,
+//                .widthIn(max = 300.dp),
             shape = BubbleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = MaterialTheme.colorScheme.surfaceContainer,
             shadowElevation = 0.5.dp
         ) {
             Column {
                 when (item.type) {
                     ItemType.Text -> Text(
-                        item.textContent.orEmpty(),
+                        formatWhatsAppText(item.textContent.orEmpty()),
                         modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 6.dp),
                         style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp)
                     )
@@ -99,11 +103,26 @@ fun ItemBubble(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (isSelected) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                    }
                     if (item.isRetryableMedia) {
                         Text(
                             "Failed",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    if (item.isEdited) {
+                        Text(
+                            "Edited",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Text(
@@ -135,7 +154,7 @@ private fun LinkContent(item: Item, modifier: Modifier = Modifier) {
             )
         }
         Text(
-            item.textContent.orEmpty(),
+            formatWhatsAppText(item.textContent.orEmpty()),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
             overflow = TextOverflow.Ellipsis,

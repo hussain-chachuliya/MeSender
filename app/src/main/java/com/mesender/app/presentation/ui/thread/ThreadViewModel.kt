@@ -10,6 +10,7 @@ import com.mesender.app.domain.usecase.item.DeleteItem
 import com.mesender.app.domain.usecase.item.GetItemsByInbox
 import com.mesender.app.domain.usecase.item.MediaShare
 import com.mesender.app.domain.usecase.item.ShareMediaItem
+import com.mesender.app.domain.usecase.item.UpdateItemText
 import com.mesender.app.domain.usecase.lock.IsInboxUnlocked
 import com.mesender.app.domain.usecase.search.SearchItemsInInbox
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +30,7 @@ class ThreadViewModel @Inject constructor(
     private val composeTextItemUseCase: ComposeTextItem,
     private val shareMediaItemUseCase: ShareMediaItem,
     private val deleteItemUseCase: DeleteItem,
+    private val updateItemTextUseCase: UpdateItemText,
     private val isInboxUnlockedUseCase: IsInboxUnlocked,
     private val searchItemsInInboxUseCase: SearchItemsInInbox
 ) : ViewModel() {
@@ -115,5 +117,71 @@ class ThreadViewModel @Inject constructor(
 
     fun deleteItem(item: Item) {
         viewModelScope.launch { deleteItemUseCase(item) }
+    }
+
+    fun toggleSelection(item: Item) {
+        val current = _uiState.value.selectedIds
+        val newSelected = if (item.id in current) current - item.id else current + item.id
+        _uiState.value = _uiState.value.copy(selectedIds = newSelected)
+    }
+
+    fun clearSelection() {
+        _uiState.value = _uiState.value.copy(selectedIds = emptySet())
+    }
+
+    fun selectAllItems() {
+        val allIds = _uiState.value.items.map { it.id }.toSet()
+        _uiState.value = _uiState.value.copy(selectedIds = allIds)
+    }
+
+    fun getSelectedItems(): List<Item> {
+        val selectedIds = _uiState.value.selectedIds
+        return _uiState.value.items.filter { it.id in selectedIds }
+    }
+
+    fun deleteSelected() {
+        val selectedIds = _uiState.value.selectedIds
+        val itemsToDelete = _uiState.value.items.filter { it.id in selectedIds }
+        viewModelScope.launch {
+            itemsToDelete.forEach { deleteItemUseCase(it) }
+            _uiState.value = _uiState.value.copy(selectedIds = emptySet())
+        }
+    }
+
+    fun getSelectedItem(): Item? {
+        val selectedIds = _uiState.value.selectedIds
+        if (selectedIds.size != 1) return null
+        return _uiState.value.items.find { it.id == selectedIds.first() }
+    }
+
+    fun startEditing(item: Item) {
+        _uiState.value = _uiState.value.copy(
+            editingItem = item,
+            draft = item.textContent.orEmpty(),
+            selectedIds = emptySet()
+        )
+    }
+
+    fun cancelEditing() {
+        _uiState.value = _uiState.value.copy(
+            editingItem = null,
+            draft = ""
+        )
+    }
+
+    fun saveEdit() {
+        val editingItem = _uiState.value.editingItem ?: return
+        val newText = _uiState.value.draft.trim()
+        if (newText.isEmpty() || newText == editingItem.textContent) {
+            cancelEditing()
+            return
+        }
+        viewModelScope.launch {
+            updateItemTextUseCase(editingItem, newText)
+            _uiState.value = _uiState.value.copy(
+                editingItem = null,
+                draft = ""
+            )
+        }
     }
 }

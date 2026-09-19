@@ -13,4 +13,5 @@ data class Item(
 ) {
     val isMedia: Boolean get() = type == ItemType.Photo || type == ItemType.Video
     val isRetryableMedia: Boolean get() = isMedia && mediaPath == null
+    val isEdited: Boolean get() = updatedAt > createdAt
 }

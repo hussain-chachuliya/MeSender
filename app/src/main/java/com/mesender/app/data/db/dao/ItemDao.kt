@@ -47,6 +47,9 @@ interface ItemDao {
     @Query("UPDATE items SET mediaPath = :path, needsMediaRetry = 0 WHERE id = :itemId")
     suspend fun setMediaPath(itemId: Long, path: String)
 
+    @Query("UPDATE items SET text = :text, updatedAt = :updatedAt WHERE id = :itemId")
+    suspend fun updateText(itemId: Long, text: String, updatedAt: Long)
+
     @Query(
         """
         SELECT items.* FROM items_fts

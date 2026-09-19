@@ -14,6 +14,7 @@ import com.mesender.app.domain.usecase.item.DeleteItem
 import com.mesender.app.domain.usecase.item.GetItemsByInbox
 import com.mesender.app.domain.usecase.item.ShareLinkItem
 import com.mesender.app.domain.usecase.item.ShareMediaItem
+import com.mesender.app.domain.usecase.item.UpdateItemText
 import com.mesender.app.domain.usecase.lock.IsInboxUnlocked
 import com.mesender.app.domain.usecase.lock.LockAllInboxes
 import com.mesender.app.domain.usecase.lock.RemoveAppLock
@@ -43,6 +44,7 @@ object UseCaseModule {
     @Provides @Singleton fun shareMediaItem(r: ItemRepository) = ShareMediaItem(r)
     @Provides @Singleton fun shareLinkItem(r: ItemRepository) = ShareLinkItem(r)
     @Provides @Singleton fun deleteItem(r: ItemRepository) = DeleteItem(r)
+    @Provides @Singleton fun updateItemText(r: ItemRepository) = UpdateItemText(r)
 
     @Provides @Singleton fun searchItems(r: ItemRepository) = SearchItems(r)
     @Provides @Singleton fun searchItemsInInbox(r: ItemRepository) = SearchItemsInInbox(r)

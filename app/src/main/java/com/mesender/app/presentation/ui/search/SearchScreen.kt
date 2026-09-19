@@ -85,7 +85,9 @@ fun SearchScreen(
                     } else {
                         ItemBubble(
                             item = result.item,
-                            onDelete = {}, // deletion only within thread
+                            isSelected = false,
+                            isSelectionMode = false,
+                            onToggleSelection = {},
                             modifier = Modifier.clickable { onOpenInbox(result.item.inboxId) }
                         )
                     }

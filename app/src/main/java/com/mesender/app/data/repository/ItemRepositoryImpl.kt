@@ -112,6 +112,12 @@ class ItemRepositoryImpl @Inject constructor(
         return true
     }
 
+    override suspend fun updateItemText(item: Item, newText: String): Boolean {
+        val now = System.currentTimeMillis()
+        itemDao.updateText(item.id, newText, now)
+        return true
+    }
+
     override fun search(query: String): Flow<List<SearchResult>> =
         itemDao.searchWithInbox(query).map { list -> list.map { it.toSearchResult() } }
 
