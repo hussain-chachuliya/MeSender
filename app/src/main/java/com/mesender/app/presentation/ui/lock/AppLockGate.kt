@@ -39,6 +39,10 @@ class AppLockViewModel @Inject constructor(
             _pinSet = true
         }
     }
+
+    fun skipSetup() {
+        _pinSet = true
+    }
 }
 
 @Composable
@@ -52,7 +56,11 @@ fun AppLockGate(
     if (pinSet == null) return
 
     if (!pinSet) {
-        LockScreen(setupMode = true, onUnlocked = { lockViewModel.onSetupComplete() })
+        LockScreen(
+            setupMode = true,
+            onUnlocked = { lockViewModel.onSetupComplete() },
+            onSkip = { lockViewModel.skipSetup() }
+        )
     } else if (unlocked) {
         content()
     } else {

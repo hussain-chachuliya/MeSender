@@ -45,7 +45,7 @@ object UseCaseModule {
 
     @Provides @Singleton fun searchItems(r: ItemRepository) = SearchItems(r)
 
-    @Provides @Singleton fun setAppLock(p: PinStore, l: LockManager) = SetAppLock(p, l)
+    @Provides @Singleton fun setAppLock(p: PinStore) = SetAppLock(p)
     @Provides @Singleton fun removeAppLock(p: PinStore, l: LockManager) = RemoveAppLock(p, l)
     @Provides @Singleton fun verifyPin(p: PinStore, l: LockManager) = VerifyPin(p, l)
     @Provides @Singleton fun unlockInbox(l: LockManager) = UnlockInbox(l)

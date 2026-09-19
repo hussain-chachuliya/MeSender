@@ -3,21 +3,25 @@ package com.mesender.app.presentation.ui.lock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mesender.app.domain.lock.BiometricAuth
+import com.mesender.app.domain.lock.LockManager
 import com.mesender.app.domain.usecase.lock.SetAppLock
 import com.mesender.app.domain.usecase.lock.UnlockInbox
 import com.mesender.app.domain.usecase.lock.VerifyPin
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class LockViewModel @Inject constructor(
     private val verifyPinUseCase: VerifyPin,
     private val setAppLockUseCase: SetAppLock,
     private val unlockInboxUseCase: UnlockInbox,
+    private val lockManager: LockManager,
     val biometric: BiometricAuth
 ) : ViewModel() {
 
@@ -29,6 +33,9 @@ class LockViewModel @Inject constructor(
 
     private val _unlocked = MutableStateFlow(false)
     val unlocked: StateFlow<Boolean> = _unlocked.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     // setupMode=true → first-run setup, else → unlock (app, or a specific inbox when targetInboxId is set)
     private var setupMode = false
@@ -59,7 +66,12 @@ class LockViewModel @Inject constructor(
 
     fun onBiometricSuccess() {
         viewModelScope.launch {
-            targetInboxId?.let { unlockInboxUseCase(it) }
+            val inboxId = targetInboxId
+            if (inboxId != null) {
+                unlockInboxUseCase(inboxId)
+            } else {
+                lockManager.unlockApp()
+            }
             _unlocked.value = true
         }
     }
@@ -67,17 +79,26 @@ class LockViewModel @Inject constructor(
     private fun checkPin() {
         val pin = _enteredPin.value
         viewModelScope.launch {
-            if (setupMode) {
-                setAppLockUseCase(pin)
-                _unlocked.value = true
-            } else {
-                if (verifyPinUseCase(pin)) {
-                    targetInboxId?.let { unlockInboxUseCase(it) }
+            _isLoading.value = true
+            try {
+                if (setupMode) {
+                    withContext(Dispatchers.Default) { setAppLockUseCase(pin) }
                     _unlocked.value = true
                 } else {
-                    _enteredPin.value = ""
-                    _error.value = "Wrong PIN. Try again."
+                    val ok = withContext(Dispatchers.Default) { verifyPinUseCase(pin) }
+                    if (ok) {
+                        targetInboxId?.let { unlockInboxUseCase(it) }
+                        _unlocked.value = true
+                    } else {
+                        _enteredPin.value = ""
+                        _error.value = "Wrong PIN. Try again."
+                    }
                 }
+            } catch (_: Exception) {
+                _error.value = "Something went wrong. Try again."
+                _enteredPin.value = ""
+            } finally {
+                _isLoading.value = false
             }
         }
     }

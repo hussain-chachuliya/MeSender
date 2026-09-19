@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,12 +28,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun LockScreen(
     setupMode: Boolean,
     onUnlocked: () -> Unit,
+    onSkip: (() -> Unit)? = null,
     inboxId: Long? = null,
     viewModel: LockViewModel = hiltViewModel()
 ) {
     val digits by viewModel.enteredPin.collectAsState()
     val error by viewModel.error.collectAsState()
     val unlocked by viewModel.unlocked.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(Unit) {
         if (inboxId != null) viewModel.setInboxUnlock(inboxId)
@@ -61,21 +65,31 @@ fun LockScreen(
                 )
             }
             Spacer(Modifier.height(32.dp))
-            PinPad(
-                digits = digits,
-                onDigit = viewModel::onDigit,
-                onDelete = viewModel::onDeleteLast,
-                onBiometric = if (biometricAvailable) {
-                    {
-                        activity?.let { a ->
-                            viewModel.biometric.authenticate(
-                                a,
-                                onSuccess = { viewModel.onBiometricSuccess() }
-                            )
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            } else {
+                PinPad(
+                    digits = digits,
+                    onDigit = viewModel::onDigit,
+                    onDelete = viewModel::onDeleteLast,
+                    onBiometric = if (biometricAvailable) {
+                        {
+                            activity?.let { a ->
+                                viewModel.biometric.authenticate(
+                                    a,
+                                    onSuccess = { viewModel.onBiometricSuccess() }
+                                )
+                            }
                         }
-                    }
-                } else null
-            )
+                    } else null
+                )
+            }
+            if (setupMode && onSkip != null) {
+                Spacer(Modifier.height(24.dp))
+                TextButton(onClick = onSkip) {
+                    Text("Skip")
+                }
+            }
         }
     }
 }
