@@ -5,10 +5,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -168,47 +170,61 @@ fun ThreadScreen(
                         actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 )
-            } else {
-                TopAppBar(
-                    title = {
-                        if (isSearchActive) {
-                            OutlinedTextField(
-                                value = state.searchQuery,
-                                onValueChange = viewModel::onSearchQueryChange,
-                                placeholder = { Text("Search in inbox\u2026") },
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f),
-                                    focusedBorderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f),
-                                    focusedContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                                    cursorColor = MaterialTheme.colorScheme.onPrimary,
-                                    focusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                                    unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
-                                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                                    focusedPlaceholderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-                                ),
-                                modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester)
-                            )
-                        } else {
-                            Text(state.inbox?.name ?: "\u2026")
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            if (isSearchActive) viewModel.clearSearch() else onBack()
-                        }) {
+            } else if (isSearchActive) {
+                Surface(color = MaterialTheme.colorScheme.primary) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().statusBarsPadding()
+                    ) {
+                        IconButton(onClick = { viewModel.clearSearch() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = if (isSearchActive) "Clear search" else "Back"
+                                contentDescription = "Clear search"
+                            )
+                        }
+                        OutlinedTextField(
+                            value = state.searchQuery,
+                            onValueChange = viewModel::onSearchQueryChange,
+                            placeholder = { Text("Search in inbox\u2026") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(24.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f),
+                                focusedContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                                cursorColor = MaterialTheme.colorScheme.onPrimary,
+                                focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                                focusedPlaceholderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(searchFocusRequester)
+                        )
+                        IconButton(onClick = { viewModel.toggleSearchMode() }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Close search"
+                            )
+                        }
+                    }
+                }
+            } else {
+                TopAppBar(
+                    title = { Text(state.inbox?.name ?: "\u2026") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
                             )
                         }
                     },
                     actions = {
                         IconButton(onClick = { viewModel.toggleSearchMode() }) {
                             Icon(
-                                if (isSearchActive) Icons.Default.Close else Icons.Default.Search,
-                                contentDescription = if (isSearchActive) "Close search" else "Search"
+                                Icons.Default.Search,
+                                contentDescription = "Search"
                             )
                         }
                     },
