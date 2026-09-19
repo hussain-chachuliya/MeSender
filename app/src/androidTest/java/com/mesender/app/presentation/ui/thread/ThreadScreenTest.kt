@@ -22,6 +22,8 @@ import com.mesender.app.domain.usecase.item.DeleteItem
 import com.mesender.app.domain.usecase.item.GetItemsByInbox
 import com.mesender.app.domain.usecase.item.ShareMediaItem
 import com.mesender.app.domain.usecase.lock.IsInboxUnlocked
+import com.mesender.app.domain.usecase.item.UpdateItemText
+import com.mesender.app.domain.usecase.search.SearchItemsInInbox
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -48,17 +50,19 @@ class ThreadScreenTest {
             ComposeTextItem(itemRepo),
             ShareMediaItem(itemRepo),
             DeleteItem(itemRepo),
-            IsInboxUnlocked(lockManagerWith(unlocked = true))
+            UpdateItemText(itemRepo),
+            IsInboxUnlocked(lockManagerWith(unlocked = true)),
+            SearchItemsInInbox(itemRepo)
         )
     }
 
     @Test fun thread_rendersItemsInInbox() {
-        composeRule.setContent { MaterialTheme { ThreadScreen(1, {}, vm) } }
+        composeRule.setContent { MaterialTheme { ThreadScreen(inboxId = 1, onBack = {}, viewModel = vm) } }
         composeRule.onNodeWithText("buy milk").assertIsDisplayed()
     }
 
     @Test fun composing_sendsText() {
-        composeRule.setContent { MaterialTheme { ThreadScreen(1, {}, vm) } }
+        composeRule.setContent { MaterialTheme { ThreadScreen(inboxId = 1, onBack = {}, viewModel = vm) } }
         composeRule.onNodeWithText("Message yourself…").performTextInput("hello")
         composeRule.onNodeWithContentDescription("Send").performClick()
         Espresso.closeSoftKeyboard()
@@ -77,9 +81,11 @@ class ThreadScreenTest {
             ComposeTextItem(lockedItemRepo),
             ShareMediaItem(lockedItemRepo),
             DeleteItem(lockedItemRepo),
-            IsInboxUnlocked(lockManagerWith(unlocked = false))
+            UpdateItemText(lockedItemRepo),
+            IsInboxUnlocked(lockManagerWith(unlocked = false)),
+            SearchItemsInInbox(lockedItemRepo)
         )
-        composeRule.setContent { MaterialTheme { ThreadScreen(1, {}, lockedVm) } }
+        composeRule.setContent { MaterialTheme { ThreadScreen(inboxId = 1, onBack = {}, viewModel = lockedVm) } }
         composeRule.onNodeWithText("Inbox locked").assertIsDisplayed()
         composeRule.onNodeWithText("secrets").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Attach").assertDoesNotExist()
@@ -103,7 +109,9 @@ class ThreadScreenTest {
         override suspend fun insertMediaItem(id: Long, uri: Uri, mime: String, title: String?) = item
         override suspend fun insertLinkItem(id: Long, url: String, title: String?) = item
         override suspend fun deleteItem(item: Item) = true
+        override suspend fun updateItemText(item: Item, newText: String) = true
         override fun search(query: String): Flow<List<SearchResult>> = flowOf(emptyList())
+        override fun searchInInbox(inboxId: Long, query: String): Flow<List<Item>> = flowOf(emptyList())
         override suspend fun reloadMedia(item: Item) = null
     }
 

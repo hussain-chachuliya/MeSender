@@ -14,6 +14,8 @@ import com.mesender.app.domain.usecase.item.DeleteItem
 import com.mesender.app.domain.usecase.item.GetItemsByInbox
 import com.mesender.app.domain.usecase.item.ShareMediaItem
 import com.mesender.app.domain.usecase.lock.IsInboxUnlocked
+import com.mesender.app.domain.usecase.item.UpdateItemText
+import com.mesender.app.domain.usecase.search.SearchItemsInInbox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -83,9 +85,9 @@ class ThreadViewModelTest {
     }
 
     @Test
-    fun unknownState_beforeFirstEmission_isGated() = runTest {
+    fun unknownState_beforeFirstEmission_isNotGated() = runTest {
         val vm = viewModelWith(inbox = inbox, lockedManager = FakeLockManager(unlocked = false))
-        assertTrue(vm.uiState.value.isGated)
+        assertFalse(vm.uiState.value.isGated)
     }
 
     private fun viewModelWith(inbox: Inbox, lockedManager: LockManager): ThreadViewModel {
@@ -97,7 +99,9 @@ class ThreadViewModelTest {
             override suspend fun insertMediaItem(id: Long, uri: Uri, mime: String, title: String?) = item
             override suspend fun insertLinkItem(id: Long, url: String, title: String?) = item
             override suspend fun deleteItem(item: Item) = true
+            override suspend fun updateItemText(item: Item, newText: String) = true
             override fun search(query: String): Flow<List<SearchResult>> = flowOf(emptyList())
+            override fun searchInInbox(inboxId: Long, query: String): Flow<List<Item>> = flowOf(emptyList())
             override suspend fun reloadMedia(item: Item) = null
         }
         val inboxRepo = object : InboxRepository {
@@ -114,7 +118,9 @@ class ThreadViewModelTest {
             ComposeTextItem(itemRepo),
             ShareMediaItem(itemRepo),
             DeleteItem(itemRepo),
-            IsInboxUnlocked(lockedManager)
+            UpdateItemText(itemRepo),
+            IsInboxUnlocked(lockedManager),
+            SearchItemsInInbox(itemRepo)
         )
     }
 

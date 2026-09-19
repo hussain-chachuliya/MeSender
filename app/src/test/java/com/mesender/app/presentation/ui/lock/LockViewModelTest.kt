@@ -49,10 +49,11 @@ class LockViewModelTest {
             }
             override suspend fun lockAllInboxes() = Unit
         }
-        vm = LockViewModel(
+vm = LockViewModel(
             VerifyPin(mockk(), lockManager),
-            SetAppLock(mockk(), lockManager),
+            SetAppLock(mockk()),
             UnlockInbox(lockManager),
+            lockManager,
             mockk<BiometricAuth>()
         )
         vm.setInboxUnlock(7L)
@@ -69,8 +70,9 @@ class LockViewModelTest {
         val lockManager = mockk<LockManager>(relaxed = true)
         val vm = LockViewModel(
             VerifyPin(mockk(), lockManager),
-            SetAppLock(mockk(), lockManager),
+            SetAppLock(mockk()),
             UnlockInbox(lockManager),
+            lockManager,
             mockk<BiometricAuth>()
         )
 

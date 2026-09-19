@@ -189,6 +189,8 @@ class ShareViewModelTest {
             return item.copy(inboxId = id, title = title)
         }
         override suspend fun deleteItem(item: Item) = true
+        override suspend fun updateItemText(item: Item, newText: String) = true
+        override fun searchInInbox(inboxId: Long, query: String): Flow<List<Item>> = flowOf(emptyList())
         override suspend fun reloadMedia(item: Item): Item? = null
     }
 

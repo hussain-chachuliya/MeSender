@@ -54,6 +54,7 @@ fun ThreadInputBar(
     editingItem: com.mesender.app.domain.model.Item? = null,
     onCancelEdit: () -> Unit = {},
     onSaveEdit: () -> Unit = {},
+    showAttach: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -112,16 +113,18 @@ fun ThreadInputBar(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.Bottom
             ) {
-                IconButton(onClick = {
-                    picker.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                    )
-                }) {
-                    Icon(
-                        Icons.Outlined.AttachFile,
-                        contentDescription = "Attach",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (showAttach) {
+                    IconButton(onClick = {
+                        picker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                        )
+                    }) {
+                        Icon(
+                            Icons.Outlined.AttachFile,
+                            contentDescription = "Attach",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 OutlinedTextField(
                     value = draft,

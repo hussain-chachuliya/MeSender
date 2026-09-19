@@ -32,6 +32,7 @@ class HomeScreenTest {
                 HomeScreen(
                     onOpenInbox = {},
                     onOpenSearch = {},
+                    onOpenSettings = {},
                     viewModel = homeViewModelWith()
                 )
             }
@@ -47,6 +48,7 @@ class HomeScreenTest {
                 HomeScreen(
                     onOpenInbox = {},
                     onOpenSearch = {},
+                    onOpenSettings = {},
                     viewModel = homeViewModelWith(createCallback = { created = it })
                 )
             }

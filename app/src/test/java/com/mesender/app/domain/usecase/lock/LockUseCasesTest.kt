@@ -17,10 +17,9 @@ class LockUseCasesTest {
     private val lockManager = mockk<LockManager>(relaxed = true)
 
     @Test
-    fun `set lock stores hash and locks app`() = runTest {
-        SetAppLock(pinStore, lockManager)("1234")
+    fun `set lock stores hash`() = runTest {
+        SetAppLock(pinStore)("1234")
         coVerify { pinStore.savePinHash(any()) }
-        coVerify { lockManager.lockApp() }
     }
 
     @Test

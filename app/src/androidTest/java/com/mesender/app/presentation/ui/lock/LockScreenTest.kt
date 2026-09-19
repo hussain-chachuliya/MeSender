@@ -14,6 +14,7 @@ import com.mesender.app.domain.usecase.lock.SetAppLock
 import com.mesender.app.domain.usecase.lock.UnlockInbox
 import com.mesender.app.domain.usecase.lock.VerifyPin
 import com.mesender.app.domain.util.PinHasher
+import com.mesender.app.presentation.theme.AppTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -121,8 +122,9 @@ class LockScreenTest {
         val store = pinStore ?: FakePinStore(storedHash = storedPin)
         return LockViewModel(
             VerifyPin(store, lockManager),
-            SetAppLock(store, lockManager),
+            SetAppLock(store),
             UnlockInbox(lockManager),
+            lockManager,
             FakeBiometric()
         )
     }
@@ -132,6 +134,10 @@ class LockScreenTest {
         override suspend fun savePinHash(hash: String) { storedHash = hash }
         override suspend fun pinHash(): String? = storedHash
         override suspend fun clearPin() { storedHash = null }
+        override val isAppLockEnabled: Flow<Boolean> = MutableStateFlow(storedHash != null)
+        override suspend fun setAppLockEnabled(enabled: Boolean) = Unit
+        override val appTheme: Flow<AppTheme> = MutableStateFlow(AppTheme.GREEN)
+        override suspend fun setAppTheme(theme: AppTheme) = Unit
     }
 
     private class FakeLockManager : LockManager {

@@ -1,9 +1,6 @@
 package com.mesender.app.presentation.ui.thread
 
-import android.content.Intent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,11 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +24,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -49,9 +41,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mesender.app.presentation.ui.common.DeleteItemsDialog
+import com.mesender.app.presentation.ui.common.ItemSelectionTopBar
+import com.mesender.app.presentation.ui.common.shareItems
 import com.mesender.app.presentation.ui.lock.LockScreen
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThreadScreen(
     inboxId: Long,
@@ -84,91 +79,32 @@ fun ThreadScreen(
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete ${state.selectedIds.size} item(s)?") },
-            text = { Text("This action cannot be undone.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteSelected()
-                    showDeleteDialog = false
-                }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
+        DeleteItemsDialog(
+            itemCount = state.selectedIds.size,
+            onConfirm = {
+                viewModel.deleteSelected()
+                showDeleteDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { showDeleteDialog = false }
         )
     }
 
     Scaffold(
         topBar = {
             if (isSelectionMode) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "${state.selectedIds.size} selected",
-                            modifier = Modifier.combinedClickable(
-                                onClick = {},
-                                onLongClick = { viewModel.selectAllItems() }
-                            )
-                        )
+                ItemSelectionTopBar(
+                    selectedCount = state.selectedIds.size,
+                    showEdit = state.selectedIds.size == 1,
+                    onClearSelection = viewModel::clearSelection,
+                    onEdit = {
+                        viewModel.getSelectedItem()?.let { viewModel.startEditing(it) }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = { viewModel.clearSelection() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Clear selection"
-                            )
-                        }
+                    onDelete = { showDeleteDialog = true },
+                    onShare = {
+                        shareItems(context, viewModel.getSelectedItems())
+                        viewModel.clearSelection()
                     },
-                    actions = {
-                        if (state.selectedIds.size == 1) {
-                            IconButton(onClick = {
-                                val selectedItem = viewModel.getSelectedItem()
-                                selectedItem?.let { viewModel.startEditing(it) }
-                            }) {
-                                Icon(
-                                    Icons.Default.Edit,
-                                    contentDescription = "Edit"
-                                )
-                            }
-                        }
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Delete selected"
-                            )
-                        }
-                        IconButton(onClick = {
-                            val selectedItems = viewModel.getSelectedItems()
-                            if (selectedItems.isNotEmpty()) {
-                                val shareText = selectedItems.joinToString("\n\n") {
-                                    it.textContent.orEmpty()
-                                }
-                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                    type = "text/plain"
-                                }
-                                context.startActivity(Intent.createChooser(sendIntent, "Share via"))
-                            }
-                            viewModel.clearSelection()
-                        }) {
-                            Icon(
-                                Icons.Outlined.Share,
-                                contentDescription = "Share selected"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    onSelectAll = viewModel::selectAllItems
                 )
             } else if (isSearchActive) {
                 Surface(color = MaterialTheme.colorScheme.primary) {
