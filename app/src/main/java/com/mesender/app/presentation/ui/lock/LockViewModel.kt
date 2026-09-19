@@ -57,7 +57,12 @@ class LockViewModel @Inject constructor(
         _error.value = null
     }
 
-    fun onBiometricSuccess() { _unlocked.value = true }
+    fun onBiometricSuccess() {
+        viewModelScope.launch {
+            targetInboxId?.let { unlockInboxUseCase(it) }
+            _unlocked.value = true
+        }
+    }
 
     private fun checkPin() {
         val pin = _enteredPin.value

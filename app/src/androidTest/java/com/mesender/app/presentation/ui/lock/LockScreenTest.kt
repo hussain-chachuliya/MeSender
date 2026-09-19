@@ -16,7 +16,9 @@ import com.mesender.app.domain.usecase.lock.VerifyPin
 import com.mesender.app.domain.util.PinHasher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -27,13 +29,17 @@ class LockScreenTest {
     @Test
     fun lockScreen_setupMode_acceptsPin() {
         var unlocked = false
+        val pinStore = FakePinStore(storedHash = null)
+        val vm = lockViewModel(pinStore = pinStore)
         composeRule.setContent {
             MaterialTheme {
-                LockScreen(setupMode = true, onUnlocked = { unlocked = true }, viewModel = lockViewModel())
+                LockScreen(setupMode = true, onUnlocked = { unlocked = true }, viewModel = vm)
             }
         }
         enterPin("1234")
         composeRule.waitUntil(2_000) { unlocked }
+        val persisted = runBlocking { pinStore.pinHash() }
+        assertTrue(persisted != null && PinHasher.verify("1234", persisted))
     }
 
     @Test
@@ -109,12 +115,13 @@ class LockScreenTest {
 
     private fun lockViewModel(
         storedPin: String? = null,
-        lockManager: LockManager = FakeLockManager()
+        lockManager: LockManager = FakeLockManager(),
+        pinStore: FakePinStore? = null
     ): LockViewModel {
-        val pinStore = FakePinStore(storedHash = storedPin)
+        val store = pinStore ?: FakePinStore(storedHash = storedPin)
         return LockViewModel(
-            VerifyPin(pinStore, lockManager),
-            SetAppLock(pinStore, lockManager),
+            VerifyPin(store, lockManager),
+            SetAppLock(store, lockManager),
             UnlockInbox(lockManager),
             FakeBiometric()
         )
