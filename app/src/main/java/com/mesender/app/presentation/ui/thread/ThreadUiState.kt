@@ -17,5 +17,5 @@ data class ThreadUiState(
      * state renders the gate so locked content and the composer never flash.
      */
     val isGated: Boolean
-        get() = (inbox?.isLocked != false) && (isUnlocked != true)
+        get() = inbox != null && inbox.isLocked && isUnlocked != true
 }
