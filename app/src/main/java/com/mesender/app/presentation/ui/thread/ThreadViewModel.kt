@@ -43,10 +43,9 @@ class ThreadViewModel @Inject constructor(
                 getItemsByInboxUseCase(inboxId),
                 isInboxUnlockedUseCase(inboxId)
             ) { inboxes, items, isUnlocked ->
-                ThreadUiState(
+                _uiState.value.copy(
                     inbox = inboxes.firstOrNull { it.id == inboxId },
                     items = items,
-                    draft = "",
                     isUnlocked = isUnlocked
                 )
             }.collect { state -> _uiState.value = state }

@@ -36,9 +36,8 @@ interface ItemDao {
 
     @Query(
         """
-        SELECT * FROM items_fts
+        SELECT items.* FROM items_fts
         JOIN items ON items.id = items_fts.rowid
-        JOIN inboxes ON inboxes.id = items.inboxId
         WHERE items_fts MATCH :query
         ORDER BY items.id DESC
         """
