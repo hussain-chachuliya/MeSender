@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.mesender.app.presentation.theme.AppTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -14,6 +15,7 @@ const val DATA_STORE_NAME = "mesender_prefs"
 
 private val PIN_HASH = stringPreferencesKey("pin_hash")
 private val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
+private val APP_THEME = stringPreferencesKey("app_theme")
 
 class DataStoreProvider @Inject constructor(
     private val dataStore: DataStore<Preferences>
@@ -35,5 +37,18 @@ class DataStoreProvider @Inject constructor(
 
     suspend fun setAppLockEnabled(enabled: Boolean) {
         dataStore.edit { it[APP_LOCK_ENABLED] = enabled }
+    }
+
+    val appTheme: Flow<AppTheme> =
+        dataStore.data.map {
+            try {
+                AppTheme.valueOf(it[APP_THEME] ?: AppTheme.GREEN.name)
+            } catch (_: Exception) {
+                AppTheme.GREEN
+            }
+        }
+
+    suspend fun setAppTheme(theme: AppTheme) {
+        dataStore.edit { it[APP_THEME] = theme.name }
     }
 }

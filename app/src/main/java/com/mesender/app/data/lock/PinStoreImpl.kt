@@ -1,6 +1,7 @@
 package com.mesender.app.data.lock
 
 import com.mesender.app.domain.lock.PinStore
+import com.mesender.app.presentation.theme.AppTheme
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -19,4 +20,8 @@ class PinStoreImpl @Inject constructor(
     override val isAppLockEnabled: Flow<Boolean> = provider.appLockEnabled
 
     override suspend fun setAppLockEnabled(enabled: Boolean) = provider.setAppLockEnabled(enabled)
+
+    override val appTheme: Flow<AppTheme> = provider.appTheme
+
+    override suspend fun setAppTheme(theme: AppTheme) = provider.setAppTheme(theme)
 }

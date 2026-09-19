@@ -63,7 +63,7 @@ fun ItemBubble(
             modifier = Modifier,
 //                .widthIn(max = 300.dp),
             shape = BubbleShape,
-            color = MaterialTheme.colorScheme.surfaceContainer,
+            color = MaterialTheme.colorScheme.secondaryContainer,
             shadowElevation = 0.5.dp
         ) {
             Column {

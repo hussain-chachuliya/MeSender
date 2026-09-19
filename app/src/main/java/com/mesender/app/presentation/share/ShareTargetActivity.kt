@@ -25,14 +25,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.mesender.app.domain.model.Inbox
+import com.mesender.app.presentation.theme.AppTheme
 import com.mesender.app.presentation.theme.MeSenderTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+
+private val APP_THEME_KEY = stringPreferencesKey("app_theme")
 
 @AndroidEntryPoint
 class ShareTargetActivity : ComponentActivity() {
 
     private val viewModel: ShareViewModel by viewModels()
+
+    @Inject lateinit var dataStore: DataStore<Preferences>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +54,19 @@ class ShareTargetActivity : ComponentActivity() {
         val pending = ShareIntentParser.parse(intent)
         pending?.let(viewModel::init)
 
+        val themeFlow = dataStore.data
+            .catch { emit(emptyPreferences()) }
+            .map { prefs ->
+                try {
+                    AppTheme.valueOf(prefs[APP_THEME_KEY] ?: AppTheme.GREEN.name)
+                } catch (_: Exception) {
+                    AppTheme.GREEN
+                }
+            }
+            .flowOn(Dispatchers.IO)
         setContent {
-            MeSenderTheme {
+            val theme by themeFlow.collectAsState(initial = AppTheme.GREEN)
+            MeSenderTheme(appTheme = theme) {
                 ShareTargetContent(
                     pendingLabel = pending?.let { labelFor(it) },
                     state = viewModel.uiState.collectAsState().value,
@@ -84,7 +109,7 @@ private fun ShareTargetContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CircularProgressIndicator()
-            Text("Saving…", modifier = Modifier.padding(top = 12.dp))
+            Text("Saving\u2026", modifier = Modifier.padding(top = 12.dp))
         }
         return
     }
@@ -100,7 +125,7 @@ private fun ShareTargetContent(
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Save $pendingLabel to…", style = MaterialTheme.typography.titleMedium)
+        Text("Save $pendingLabel to\u2026", style = MaterialTheme.typography.titleMedium)
         if (state.error) {
             Text(
                 "Couldn't save. Check storage and try again.",

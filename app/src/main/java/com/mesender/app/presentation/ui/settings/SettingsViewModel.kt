@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mesender.app.domain.lock.LockManager
 import com.mesender.app.domain.lock.PinStore
+import com.mesender.app.presentation.theme.AppTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,13 @@ class SettingsViewModel @Inject constructor(
     val isPinSet: StateFlow<Boolean> = kotlinx.coroutines.flow.flow {
         emit(pinStore.isPinSet())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val appTheme: StateFlow<AppTheme> = pinStore.appTheme
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppTheme.GREEN)
+
+    fun setAppTheme(theme: AppTheme) {
+        viewModelScope.launch { pinStore.setAppTheme(theme) }
+    }
 
     fun setAppLockEnabled(enabled: Boolean) {
         viewModelScope.launch {
